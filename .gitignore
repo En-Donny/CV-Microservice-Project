@@ -1,0 +1,20 @@
+# Ignore temporary / binary files
+*.o
+*.obj
+*.a
+*.pyc
+*.log
+
+# Ignore temporary directories
+__pycache__
+
+# Ignore storage directories
+postgres_data
+**/logging
+!/logging
+**/saved_imgs
+
+.idea/
+venv
+
+*.env
