@@ -1,0 +1,86 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: always
+    ports:
+      - 5432:${POSTGRES_PORT}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./services/db_service/init_scripts:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+  back:
+    build:
+      context: ./services/
+      dockerfile: ./back/Dockerfile
+    command: poetry run app -V
+    container_name: back
+    restart: unless-stopped
+    volumes:
+      - ./services/back/:/app/
+      - ./logging/:/app/back/logging/
+    env_file:
+      - ./.env
+    ports:
+      - 8004:8000
+    depends_on:
+      - scraper
+
+  scraper:
+    build:
+      context: ./services/
+      dockerfile: ./scraper/Dockerfile
+    command: poetry run app -V
+    container_name: scraper
+    restart: unless-stopped
+    volumes:
+      - ./services/scraper/:/app/
+      - ./all_saved_imgs/saved_imgs/:/app/saved_imgs/
+      - ./logging/:/app/scraper/logging/
+    env_file:
+      - ./.env
+    expose:
+      - 8000
+
+  rem_bgr:
+    build:
+      context: ./services/
+      dockerfile: ./rem_bgr/Dockerfile
+    command: poetry run app -V
+    container_name: rem_bgr
+    restart: unless-stopped
+    volumes:
+      - ./services/rem_bgr/:/app/
+      - ./all_saved_imgs/highlighted_imgs/:/app/highlighted_imgs/
+      - ./logging/:/app/rem_bgr/logging/
+    env_file:
+      - ./.env
+    expose:
+      - 8000
+
+  db_service:
+    build:
+      context: ./services/
+      dockerfile: ./db_service/Dockerfile
+    command: bash -c 'while !</dev/tcp/${DB_CONTAINER_NAME}/${POSTGRES_PORT}; do sleep 1; done; poetry run app -V'
+    container_name: db_service
+    restart: unless-stopped
+    volumes:
+      - ./services/db_service/:/app/
+      - ./logging/:/app/db_service/logging/
+    env_file:
+      - ./.env
+    expose:
+      - 8000
+    depends_on:
+      - postgres
+
+
+volumes:
+  postgres_data:
