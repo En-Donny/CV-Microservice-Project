@@ -10,4 +10,13 @@ class InsertScrappedImgParams(BaseModel):
 
 # Класс для запроса получения данных из базы
 class GetScrappedImgParams(BaseModel):
+    img_path: str
+
+
+# Класс для запроса изменения записи в базе
+class UpdateScrappedImgParams(BaseModel):
+    id: int
     img_name: str
+    img_hash: str
+    img_path: str
+    is_highlighted: bool

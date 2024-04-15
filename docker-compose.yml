@@ -31,6 +31,8 @@ services:
       - 8004:8000
     depends_on:
       - scraper
+      - processor_images
+      - db_service
 
   scraper:
     build:
@@ -48,21 +50,24 @@ services:
     expose:
       - 8000
 
-  rem_bgr:
+  processor_images:
     build:
       context: ./services/
-      dockerfile: ./rem_bgr/Dockerfile
+      dockerfile: ./processor_images/Dockerfile
     command: poetry run app -V
-    container_name: rem_bgr
+    container_name: processor_images
     restart: unless-stopped
     volumes:
-      - ./services/rem_bgr/:/app/
+      - ./services/processor_images/:/app/
       - ./all_saved_imgs/highlighted_imgs/:/app/highlighted_imgs/
-      - ./logging/:/app/rem_bgr/logging/
+      - ./all_saved_imgs/saved_imgs/:/app/saved_imgs/
+      - ./logging/:/app/processor_images/logging/
     env_file:
       - ./.env
     expose:
       - 8000
+    depends_on:
+      - db_service
 
   db_service:
     build:

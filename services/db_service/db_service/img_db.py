@@ -16,6 +16,7 @@ class IMGDatabase:
     """
     IMGDatabase класс, предназначенный для работы с таблицами в Postgres.
     """
+
     def __init__(self):
         self.pool = None
 
@@ -64,22 +65,75 @@ class IMGDatabase:
         except asyncpg.exceptions.UniqueViolationError:
             return request_status_failure
 
-    async def get_by_filename(self, image_name):
+    async def get_by_filename(self, image_path):
         """
         Метод, предназначенный для получения информации об изображении из базы
-        данных по имени изображения.
+        данных по пути до изображения.
 
-        :param image_name: Имя изображения.
+        :param image_path: Полный путь изображения.
+        :return: Record или сообщение об ошибке, обернутое в список.
+        """
+        query = """
+        SELECT * FROM scrapped_images
+        WHERE img_path = $1
+        """
+        try:
+            return await self.pool.fetch(query, image_path)
+        except:
+            return ["FAILED OF SEARCHING"]
+
+    async def get_all_not_highlighted_imgs(self):
+        """
+        Метод, предназначенный для получения из таблицы всех записей
+        изображений, которые еще не были обработаны.
+
         :return: Список Record'ов или сообщение об ошибке, обернутое в список.
         """
         query = """
         SELECT * FROM scrapped_images
-        WHERE img_name = $1
+        WHERE is_highlighted is FALSE
         """
         try:
-            return await self.pool.fetch(query, image_name)
+            return await self.pool.fetch(query)
         except:
             return ["FAILED OF SEARCHING"]
+
+    async def update_one_record(self,
+                                image_id: int,
+                                image_name: str,
+                                image_hash,
+                                image_path,
+                                is_highlighted):
+        """
+        Метод, предназначенный для изменения записи в таблице.
+
+        :param image_id: ID записи в таблице.
+        :param image_name: Имя изображения в таблице.
+        :param image_hash: Хэш изображения в таблице.
+        :param image_path: Полный путь до изображения.
+        :param is_highlighted: Флаг обработанности изображения.
+        :return: None.
+        """
+        query = """
+        UPDATE 
+            scrapped_images 
+        SET 
+            img_name = $2, 
+            img_hash = $3, 
+            img_path = $4, 
+            is_highlighted = $5
+        WHERE 
+            id = $1;
+        """
+        try:
+            await self.pool.execute(query,
+                                    image_id,
+                                    image_name,
+                                    image_hash,
+                                    image_path,
+                                    is_highlighted)
+        except Exception as e:
+            logger.error(f"Got error while updating record in DB! REASON {e}")
 
     async def clear_all(self):
         """

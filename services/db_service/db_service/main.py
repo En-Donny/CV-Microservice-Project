@@ -2,8 +2,11 @@ import uvicorn
 import os
 from fastapi import FastAPI
 
-from db_service.models import InsertScrappedImgParams
-from db_service.models import GetScrappedImgParams
+from db_service.models import (
+    InsertScrappedImgParams,
+    GetScrappedImgParams,
+    UpdateScrappedImgParams,
+)
 from db_service.img_db import IMGDatabase
 
 app = FastAPI()
@@ -34,8 +37,24 @@ async def insert_scrapped_imgs(request: InsertScrappedImgParams):
 
 @app.post("/get_img")
 async def get_scrapped_imgs(request: GetScrappedImgParams):
-    res = await db.get_by_filename(request.img_name)
+    res = await db.get_by_filename(request.img_path)
     return res
+
+
+@app.get("/get_all_not_highlighted")
+async def get_all_not_highlighted():
+    res = await db.get_all_not_highlighted_imgs()
+    return {"answer": res}
+
+
+@app.post("/update_record")
+async def update_record(request: UpdateScrappedImgParams):
+    await db.update_one_record(request.id,
+                               request.img_name,
+                               request.img_hash,
+                               request.img_path,
+                               request.is_highlighted)
+    return {"answer": "success"}
 
 
 @app.get("/clear")
