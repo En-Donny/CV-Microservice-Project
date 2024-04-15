@@ -9,9 +9,10 @@
 __pycache__
 
 # Ignore storage directories
-postgres_data
+postgres_data/
 **/logging
 !/logging
+all_saved_imgs/
 **/saved_imgs
 
 .idea/
