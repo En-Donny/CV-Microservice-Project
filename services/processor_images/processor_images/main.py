@@ -1,7 +1,7 @@
 import os
 
 import uvicorn
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request
 import cv2
 from io import BytesIO
 from processor_images.img_processing import prepare_highlighter, prepare_merger
@@ -16,19 +16,17 @@ async def highlight_all():
 
 
 @app.post("/highlight_particular_img")
-async def highlight_particular_img(body: dict):
-    res = await prepare_highlighter(body)
-    img_rgb = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
-    _, buffer = cv2.imencode(".png", img_rgb)
+async def highlight_particular_img(request: Request):
+    res = await prepare_highlighter(await request.json())
+    _, buffer = cv2.imencode(".png", res)
     return Response(content=BytesIO(bytes(buffer)).getvalue(),
                     media_type="image/png")
 
 
 @app.post("/merge_two_images")
-async def merge_imgs(body: dict):
-    res = await prepare_merger(body)
-    img_rgb = cv2.cvtColor(res, cv2.COLOR_BGR2RGB)
-    _, buffer = cv2.imencode(".png", img_rgb)
+async def merge_imgs(request: Request):
+    res = await prepare_merger(await request.json())
+    _, buffer = cv2.imencode(".png", res)
     return Response(content=BytesIO(bytes(buffer)).getvalue(),
                     media_type="image/png")
 

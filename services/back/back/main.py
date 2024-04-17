@@ -6,9 +6,55 @@ import uvicorn
 import os
 import aiohttp
 from fastapi import FastAPI, Request, Response
+from back.logging.logger import get_logger
 
 app = FastAPI()
 session: aiohttp.ClientSession
+logger = get_logger("BACK")
+server_error_code = 500
+server_error_text = "Something wrong on the server side!"
+
+
+async def send_post(request: Request, url_request: str):
+    """
+    Метод для формирования и отправки POST-запроса.
+
+    :param request: объект запроса.
+    :param url_request: url-адрес отправки запроса в формате str.
+    :return: Response.
+    """
+    try:
+        async with session.post(
+                url_request,
+                headers=request.headers,
+                data=await request.body()
+        ) as resp:
+            return Response(status_code=resp.status,
+                            headers=resp.headers,
+                            content=await resp.content.read())
+    except Exception as e:
+        logger.error(f"Got error while processing the request! REASON: {e}")
+        return Response(status_code=server_error_code,
+                        content=server_error_text)
+
+
+async def send_get(request: Request, url_request: str):
+    """
+    Метод для формирования и отправки GET-запроса.
+
+    :param request: объект запроса.
+    :param url_request: url-адрес отправки запроса в формате str.
+    :return: Response.
+    """
+    try:
+        async with session.get(url_request, headers=request.headers) as resp:
+            return Response(status_code=resp.status,
+                            headers=resp.headers,
+                            content=await resp.content.read())
+    except Exception as e:
+        logger.error(f"Got error while processing the request! REASON: {e}")
+        return Response(status_code=server_error_code,
+                        content=server_error_text)
 
 
 @app.on_event("startup")
@@ -24,48 +70,43 @@ async def shutdown_event():
 
 
 @app.get("/scrape")
-async def root():
-    async with session.get(os.getenv("SCRAPER_URL")) as data:
-        ans = await data.json()
-    return ans
+async def root(request: Request):
+    return await send_get(request, os.getenv('SCRAPER_URL'))
 
 
 @app.post('/hello')
 async def hello(request: Request):
-    data = await request.json()
-    async with session.post(os.getenv('GET_ONE_URL'), json=data) as resp:
-        response = await resp.json()
-    return {"ans": response}
+    return await send_post(request, os.getenv('GET_ONE_URL'))
 
 
 @app.get('/clear_all')
-async def clear_all():
-    async with session.get(os.getenv('DELETE_URL')) as resp:
-        response = await resp.json()
-    return {"ans": response}
+async def clear_all(request: Request):
+    return await send_get(request, os.getenv('DELETE_URL'))
 
 
 @app.get('/highlight_all_images')
-async def highlight_all_images():
-    async with session.get(os.getenv('PROCESSOR_URL')) as resp:
-        response = await resp.json()
-    return {"ans": response}
+async def highlight_all_images(request: Request):
+    return await send_get(request, os.getenv('PROCESSOR_URL'))
 
 
 @app.post('/highlight_particular_image')
 async def highlight_particular_image(request: Request):
-    data = await request.json()
-    async with session.post(os.getenv('PROCESSOR_ONE_URL'), json=data) as resp:
-        ans = await resp.read()
-        return Response(content=ans, media_type="image/png")
+    return await send_post(request, os.getenv('PROCESSOR_ONE_URL'))
 
 
 @app.post('/merge_imgs')
 async def merge_imgs(request: Request):
-    data = await request.json()
-    async with session.post(os.getenv('MERGE_URL'), json=data) as resp:
-        ans = await resp.read()
-        return Response(content=ans, media_type="image/png")
+    return await send_post(request, os.getenv('MERGE_URL'))
+
+
+@app.post('/find_all_complementary')
+async def find_complementary(request: Request):
+    return await send_post(request, os.getenv('CV2_IMG_SEARCH_URL_HSV'))
+
+
+@app.post('/find_all_similar_by_lab')
+async def find_complementary(request: Request):
+    return await send_post(request, os.getenv('CV2_IMG_SEARCH_URL_LAB'))
 
 
 def start():

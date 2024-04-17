@@ -20,8 +20,10 @@ def pyramid_images_merging(filename_1: str, filename_2: str) -> np.ndarray:
     """
     param_sampling = int(os.getenv("PYRAMID_DEPTH"))
     size_of_resize = int(os.getenv("RESIZE_SIZE"))
-    A = cv2.resize(cv2.imread(filename_1), (size_of_resize, size_of_resize))
-    B = cv2.resize(cv2.imread(filename_2), (size_of_resize, size_of_resize))
+    A = cv2.resize(cv2.imread(filename_1, cv2.IMREAD_UNCHANGED),
+                   (size_of_resize, size_of_resize))
+    B = cv2.resize(cv2.imread(filename_2, cv2.IMREAD_UNCHANGED),
+                   (size_of_resize, size_of_resize))
     # generate Gaussian pyramid for A
     G = A.copy()
     gpA = [G]
