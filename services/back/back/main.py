@@ -70,7 +70,7 @@ async def shutdown_event():
 
 
 @app.get("/scrape")
-async def root(request: Request):
+async def scrape(request: Request):
     return await send_get(request, os.getenv('SCRAPER_URL'))
 
 
@@ -105,8 +105,28 @@ async def find_complementary(request: Request):
 
 
 @app.post('/find_all_similar_by_lab')
-async def find_complementary(request: Request):
+async def find_all_similar_by_lab(request: Request):
     return await send_post(request, os.getenv('CV2_IMG_SEARCH_URL_LAB'))
+
+
+@app.get('/get_all_resnet_embeddings')
+async def get_all_resnet_embeddings(request: Request):
+    return await send_get(request, os.getenv('GET_EMBEDDINGS_RESNET_URL'))
+
+
+@app.get('/get_all_clip_embeddings')
+async def get_all_clip_embeddings(request: Request):
+    return await send_get(request, os.getenv('GET_EMBEDDINGS_CLIP_URL'))
+
+
+@app.post('/get_top_24_resnet_similar')
+async def get_top_24_resnet_similar(request: Request):
+    return await send_post(request, os.getenv('MODEL_IMG_SEARCH_RESNET_URL'))
+
+
+@app.post('/get_top_25_clip_similar')
+async def get_top_25_clip_similar(request: Request):
+    return await send_post(request, os.getenv('MODEL_IMG_SEARCH_CLIP_URL'))
 
 
 def start():

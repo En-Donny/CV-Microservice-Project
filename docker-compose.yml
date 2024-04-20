@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: ankane/pgvector
     container_name: postgres
     restart: always
     ports:
@@ -39,6 +39,8 @@ services:
       - scraper
       - processor_images
       - db_service
+      - cv2_img_search
+      - model_img_search
 
   scraper:
     build:
@@ -86,6 +88,22 @@ services:
       - ./services/cv2_img_search/:/app/
       - ./all_saved_imgs/highlighted_imgs/:/app/highlighted_imgs/
       - ./logging/:/app/cv2_img_search/logging/
+    env_file:
+      - ./.env
+    expose:
+      - 8000
+
+  model_img_search:
+    build:
+      context: ./services/
+      dockerfile: ./model_img_search/Dockerfile
+    command: poetry run app -V
+    container_name: model_img_search
+    restart: unless-stopped
+    volumes:
+      - ./services/model_img_search/:/app/
+      - ./all_saved_imgs/saved_imgs/:/app/saved_imgs/
+      - ./logging/:/app/model_img_search/logging/
     env_file:
       - ./.env
     expose:

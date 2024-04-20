@@ -4,19 +4,19 @@ import numpy as np
 import cv2
 
 
-def plot_finded_imgs(list_of_complementary: list[np.ndarray]) -> np.ndarray:
+def plot_finded_imgs(list_of_images: list[np.ndarray]) -> np.ndarray:
     """
     Функция, позволяющая склеить в коллаж изображения из списка, полученного
     из методов поиска по изображению: по модели HSV или LAB.
 
-    :param list_of_complementary: Список из изображений, которые необходимо
+    :param list_of_images: Список из изображений, которые необходимо
         объединить в коллаж.
     :return: Итоговый коллаж из изображений в формате np.ndarray.
     """
     montage = None
     cnt = 0
     plot_size = int(os.getenv("PLOT_SIZE"))
-    for p in list_of_complementary[:10]:
+    for p in list_of_images[:10]:
         image = cv2.resize(p, (plot_size, plot_size))
         if montage is None:
             montage = image

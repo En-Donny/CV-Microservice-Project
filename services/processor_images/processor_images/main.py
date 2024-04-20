@@ -10,7 +10,7 @@ app = FastAPI()
 
 
 @app.get("/highlight_all_imgs")
-async def highlight_all():
+async def highlight_all_imgs():
     await prepare_highlighter()
     return {"ALL IMAGES HIGHLIGHTED"}
 
@@ -24,7 +24,7 @@ async def highlight_particular_img(request: Request):
 
 
 @app.post("/merge_two_images")
-async def merge_imgs(request: Request):
+async def merge_two_images(request: Request):
     res = await prepare_merger(await request.json())
     _, buffer = cv2.imencode(".png", res)
     return Response(content=BytesIO(bytes(buffer)).getvalue(),

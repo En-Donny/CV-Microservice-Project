@@ -11,7 +11,7 @@ app = FastAPI()
 
 
 @app.post('/find_all_complementary')
-async def find_complementary(image: UploadFile = File(...)):
+async def find_all_complementary(image: UploadFile = File(...)):
     res_img = hsv_complement_finder(await image.read())
     _, buffer = cv2.imencode(".png", res_img)
     return Response(content=BytesIO(bytes(buffer)).getvalue(),
@@ -19,7 +19,7 @@ async def find_complementary(image: UploadFile = File(...)):
 
 
 @app.post('/find_all_similar_by_lab')
-async def find_complementary(image: UploadFile = File(...)):
+async def find_all_similar_by_lab(image: UploadFile = File(...)):
     res_img = lab_similar_finder(await image.read())
     _, buffer = cv2.imencode(".png", res_img)
     return Response(content=BytesIO(bytes(buffer)).getvalue(),

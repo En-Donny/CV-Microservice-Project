@@ -6,6 +6,8 @@ from db_service.models import (
     InsertScrappedImgParams,
     GetScrappedImgParams,
     UpdateScrappedImgParams,
+    UpdateEmbeddings,
+    GetTopSimilar
 )
 from db_service.img_db import IMGDatabase
 
@@ -36,7 +38,7 @@ async def insert_scrapped_imgs(request: InsertScrappedImgParams):
 
 
 @app.post("/get_img")
-async def get_scrapped_imgs(request: GetScrappedImgParams):
+async def get_img(request: GetScrappedImgParams):
     res = await db.get_by_filename(request.img_path)
     return res
 
@@ -44,6 +46,18 @@ async def get_scrapped_imgs(request: GetScrappedImgParams):
 @app.get("/get_all_not_highlighted")
 async def get_all_not_highlighted():
     res = await db.get_all_not_highlighted_imgs()
+    return {"answer": res}
+
+
+@app.get("/get_all_not_embedded_resnet")
+async def get_all_not_embedded_resnet():
+    res = await db.get_all_not_embedded_images("resnet")
+    return {"answer": res}
+
+
+@app.get("/get_all_not_embedded_clip")
+async def get_all_not_embedded_resnet():
+    res = await db.get_all_not_embedded_images("clip")
     return {"answer": res}
 
 
@@ -55,6 +69,30 @@ async def update_record(request: UpdateScrappedImgParams):
                                request.img_path,
                                request.is_highlighted)
     return {"answer": "success"}
+
+
+@app.post("/update_resnet_embeddings")
+async def update_resnet_embeddings(request: UpdateEmbeddings):
+    await db.update_embedding(request.list_id_emb, "resnet")
+    return {"answer": "success"}
+
+
+@app.post("/update_clip_embeddings")
+async def update_clip_embeddings(request: UpdateEmbeddings):
+    await db.update_embedding(request.list_id_emb, "clip")
+    return {"answer": "success"}
+
+
+@app.post("/get_top_resnet_similar")
+async def get_top_resnet_similar(request: GetTopSimilar):
+    res = await db.get_top_similar_images(request.embedding_list, "resnet")
+    return {"answer": res}
+
+
+@app.post("/get_top_clip_similar")
+async def get_top_resnet_similar(request: GetTopSimilar):
+    res = await db.get_top_similar_images(request.embedding_list, "clip")
+    return {"answer": res}
 
 
 @app.get("/clear")
