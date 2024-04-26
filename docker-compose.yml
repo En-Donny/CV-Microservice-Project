@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: ankane/pgvector
     container_name: postgres
     restart: always
     ports:
@@ -14,6 +14,12 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    healthcheck:
+      test: "pg_isready --username=${POSTGRES_USER} && psql --username=${POSTGRES_USER} --list"
+      interval: 5s
+      timeout: 1s
+      retries: 10
+      start_period: 5s
 
   back:
     build:
@@ -31,6 +37,10 @@ services:
       - 8004:8000
     depends_on:
       - scraper
+      - processor_images
+      - db_service
+      - cv2_img_search
+      - model_img_search
 
   scraper:
     build:
@@ -48,17 +58,52 @@ services:
     expose:
       - 8000
 
-  rem_bgr:
+  processor_images:
     build:
       context: ./services/
-      dockerfile: ./rem_bgr/Dockerfile
+      dockerfile: ./processor_images/Dockerfile
     command: poetry run app -V
-    container_name: rem_bgr
+    container_name: processor_images
     restart: unless-stopped
     volumes:
-      - ./services/rem_bgr/:/app/
+      - ./services/processor_images/:/app/
       - ./all_saved_imgs/highlighted_imgs/:/app/highlighted_imgs/
-      - ./logging/:/app/rem_bgr/logging/
+      - ./all_saved_imgs/saved_imgs/:/app/saved_imgs/
+      - ./logging/:/app/processor_images/logging/
+    env_file:
+      - ./.env
+    expose:
+      - 8000
+    depends_on:
+      - db_service
+
+  cv2_img_search:
+    build:
+      context: ./services/
+      dockerfile: ./cv2_img_search/Dockerfile
+    command: poetry run app -V
+    container_name: cv2_img_search
+    restart: unless-stopped
+    volumes:
+      - ./services/cv2_img_search/:/app/
+      - ./all_saved_imgs/highlighted_imgs/:/app/highlighted_imgs/
+      - ./logging/:/app/cv2_img_search/logging/
+    env_file:
+      - ./.env
+    expose:
+      - 8000
+
+  model_img_search:
+    build:
+      context: ./services/
+      dockerfile: ./model_img_search/Dockerfile
+    command: poetry run app -V
+    container_name: model_img_search
+    restart: unless-stopped
+    volumes:
+      - ./services/model_img_search/:/app/
+      - ./all_saved_imgs/saved_imgs/:/app/saved_imgs/
+      - ./logging/:/app/model_img_search/logging/
     env_file:
       - ./.env
     expose:
@@ -68,7 +113,7 @@ services:
     build:
       context: ./services/
       dockerfile: ./db_service/Dockerfile
-    command: bash -c 'while !</dev/tcp/${DB_CONTAINER_NAME}/${POSTGRES_PORT}; do sleep 1; done; poetry run app -V'
+    command: poetry run app -V
     container_name: db_service
     restart: unless-stopped
     volumes:
@@ -79,8 +124,8 @@ services:
     expose:
       - 8000
     depends_on:
-      - postgres
-
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
